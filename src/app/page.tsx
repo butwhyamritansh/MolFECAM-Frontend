@@ -7,7 +7,8 @@ import { PredictionResult } from '@/types/prediction'
 import ForgettingMetrics from '@/components/ForgettingMetrics'
 
 export default function Home() {
-  const [result, setResult] = useState<PredictionResult[] | null>(null)
+  const [result,    setResult]    = useState<PredictionResult[] | null>(null)
+  const [fields,    setFields]    = useState<string[]>([])
 
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4">
@@ -18,10 +19,17 @@ export default function Home() {
         <p className="text-gray-600 mb-8">
           Enter a SMILES string to predict molecular properties like toxicity, sweetness, and more.
         </p>
-        <InputForm setResult={setResult} />
+        <InputForm
+          setResult={setResult}
+          setFields={setFields}
+        />
         <ForgettingMetrics />
-        {result && result.map((item, index) => (
-          <PredictionCard key={index} result={item} />
+        {result?.map((item, i) => (
+          <PredictionCard
+            key={i}
+            result={item}
+            fields={fields}
+          />
         ))}
       </div>
     </main>

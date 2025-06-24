@@ -5,14 +5,14 @@ import { PredictionResult } from '@/types/prediction'
 
 interface InputFormProps {
   setResult: (data: PredictionResult[]) => void
+  setFields: (fields: string[]) => void
 }
 
-export default function InputForm({ setResult }: InputFormProps) {
+export default function InputForm({ setResult, setFields }: InputFormProps) {
   const [smiles, setSmiles] = useState('')
   const [loading, setLoading] = useState(false)
   const [selectedFields, setSelectedFields] = useState<string[]>([])
   const fieldOptions = ['Label', 'FDA Approved', 'Taste', 'Tox21 ID']
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -28,6 +28,7 @@ export default function InputForm({ setResult }: InputFormProps) {
       if (!res.ok) throw new Error('Network response was not ok')
       const data = await res.json()
       setResult(data.results)
+      setFields(selectedFields)
     } catch (err) {
       console.error('Prediction error:', err)
     } finally {
@@ -77,3 +78,4 @@ export default function InputForm({ setResult }: InputFormProps) {
     </form>
   )
 }
+

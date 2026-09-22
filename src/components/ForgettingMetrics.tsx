@@ -1,58 +1,71 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import ForgettingChart from '@/components/ForgettingChart'
+import { getMetrics } from '@/lib/api'
+import { useApiResource } from '@/hooks/useApiResource'
+import { Badge, Card, ErrorNote, SectionHeading } from '@/components/ui'
+import type { MetricsResponse } from '@/types/api'
 
-interface ForgettingMetrics {
-  [key: string]: number | string
-}
-
+/**
+ * Catastrophic-forgetting measures from the last incremental training run.
+ *
+ * Fetched once with a slow refresh and a failure cap — the previous version
+ * polled every 5 seconds indefinitely, including while the backend was down.
+ */
 export default function ForgettingMetrics() {
-  const [metrics, setMetrics] = useState<ForgettingMetrics | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let isMounted = true
-
-    async function fetchMetrics() {
-      try {
-        const res = await fetch('http://localhost:8000/metrics/forgetting')
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data: ForgettingMetrics = await res.json()
-        if (isMounted) {
-          setMetrics(data)
-          setError(null)
-        }
-      } catch (err) {
-        if (isMounted) setError((err as Error).message)
-      }
-    }
-
-    fetchMetrics()
-    const interval = setInterval(fetchMetrics, 5000)
-
-    return () => {
-      isMounted = false
-      clearInterval(interval)
-    }
-  }, [])
-
-  if (error) {
-    return <div className="mt-6 text-red-500">Error loading metrics: {error}</div>
-  }
-  if (!metrics) {
-    return <div className="mt-6 text-gray-600">Loading forgetting metrics…</div>
-  }
+  const { data, error, initialLoading, reload } = useApiResource<MetricsResponse>(
+    ({ signal }) => getMetrics({ signal }),
+    { intervalMs: 60_000, maxFailures: 3 },
+  )
 
   return (
-    <div className="mt-6 p-4 bg-white shadow rounded text-left">
-      <h2 className="text-xl font-semibold text-gray-800 mb-2">Forgetting Metrics</h2>
-      <ul className="list-disc list-inside space-y-1 text-gray-700">
-        {Object.entries(metrics).map(([key, value]) => (
-          <li key={key}>
-            <span className="font-medium">{key}:</span> {value}
-          </li>
-        ))}
-      </ul>
+    <Card className="p-5 sm:p-6">
+      <SectionHeading
+        title="Catastrophic forgetting"
+        description="How much accuracy each task lost after later tasks were learned. Lower is better."
+        action={data?.demo ? <Badge tone="warning">Synthetic</Badge> : undefined}
+      />
+
+      <div className="mt-4">
+        {initialLoading && <ChartSkeleton />}
+
+        {!initialLoading && error && <ErrorNote message={error} onRetry={reload} />}
+
+        {!initialLoading && !error && data && !data.available && (
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {data.message ?? 'No training metrics are available yet.'}
+          </p>
+        )}
+
+        {!initialLoading && !error && data?.available && (
+          <>
+            <ForgettingChart metrics={data.metrics} />
+            <p className="mt-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+              {data.demo
+                ? 'Illustrative values — the backend is running in demo mode.'
+                : data.generated_at
+                  ? `From the training run of ${new Date(data.generated_at).toLocaleString()}.`
+                  : 'From the most recent training run.'}
+            </p>
+          </>
+        )}
+      </div>
+    </Card>
+  )
+}
+
+function ChartSkeleton() {
+  return (
+    <div className="space-y-2.5" aria-hidden="true">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="flex items-center gap-3">
+          <div className="skeleton h-3 w-16 rounded" />
+          <div
+            className="skeleton h-3 rounded-full"
+            style={{ width: `${30 + ((index * 17) % 55)}%` }}
+          />
+        </div>
+      ))}
     </div>
   )
 }

@@ -1,26 +1,182 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ── Design tokens ─────────────────────────────────────────────────────────
+   Light values on :root, dark values under both the OS media query and an
+   explicit [data-theme="dark"] stamp so the in-app toggle wins either way.   */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  color-scheme: light;
+
+  --surface-page: #f7f7f5;
+  --surface-1: #fcfcfb;
+  --surface-2: #f0efec;
+  --surface-inset: #ffffff;
+
+  --border-subtle: #e4e3df;
+  --border-strong: #cfcec8;
+
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #85847e;
+
+  --accent: #2a78d6;
+  --accent-hover: #256abf;
+  --accent-ink: #ffffff;
+  --accent-soft: #eaf2fd;
+
+  /* Categorical slots 1 and 2, validated against --surface-1 for CVD
+     separation and 3:1 contrast in both modes. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+
+  --status-good: #008300;
+  --status-warning: #eda100;
+  --status-critical: #e34948;
+  --status-good-soft: #e6f4e6;
+  --status-warning-soft: #fdf3dc;
+  --status-critical-soft: #fdeceb;
+
+  --shadow-card: 0 1px 2px rgb(11 11 11 / 0.05), 0 1px 3px rgb(11 11 11 / 0.04);
+  --shadow-lift: 0 4px 12px rgb(11 11 11 / 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --surface-page: #121211;
+    --surface-1: #1a1a19;
+    --surface-2: #232322;
+    --surface-inset: #101010;
+
+    --border-subtle: #2e2e2c;
+    --border-strong: #43433f;
+
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8e8d85;
+
+    --accent: #3987e5;
+    --accent-hover: #5598e7;
+    --accent-ink: #0b0b0b;
+    --accent-soft: #16273c;
+
+    --series-1: #3987e5;
+    --series-2: #d95926;
+
+    --status-good: #4caf50;
+    --status-warning: #c98500;
+    --status-critical: #e66767;
+    --status-good-soft: #172a18;
+    --status-warning-soft: #2c2311;
+    --status-critical-soft: #2f1a1a;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.3);
+    --shadow-lift: 0 4px 16px rgb(0 0 0 / 0.5);
   }
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface-page: #121211;
+  --surface-1: #1a1a19;
+  --surface-2: #232322;
+  --surface-inset: #101010;
+
+  --border-subtle: #2e2e2c;
+  --border-strong: #43433f;
+
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8e8d85;
+
+  --accent: #3987e5;
+  --accent-hover: #5598e7;
+  --accent-ink: #0b0b0b;
+  --accent-soft: #16273c;
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+
+  --status-good: #4caf50;
+  --status-warning: #c98500;
+  --status-critical: #e66767;
+  --status-good-soft: #172a18;
+  --status-warning-soft: #2c2311;
+  --status-critical-soft: #2f1a1a;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.3);
+  --shadow-lift: 0 4px 16px rgb(0 0 0 / 0.5);
+}
+
+/* Expose the tokens to Tailwind as utility-generating theme values. */
+@theme inline {
+  --color-page: var(--surface-page);
+  --color-surface: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-inset: var(--surface-inset);
+  --color-subtle: var(--border-subtle);
+  --color-strong: var(--border-strong);
+  --color-ink: var(--text-primary);
+  --color-ink-2: var(--text-secondary);
+  --color-ink-3: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--status-good);
+  --color-warning: var(--status-warning);
+  --color-critical: var(--status-critical);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+}
+
+* {
+  border-color: var(--border-subtle);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible, consistent focus ring for keyboard users. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--text-primary) 6%, transparent),
+    transparent
+  );
+  animation: shimmer 1.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
